@@ -1,0 +1,98 @@
+version: '3.8'
+
+networks:
+  hospital-network:
+    driver: bridge
+
+services:
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: kafka-broker
+    networks:
+      - hospital-network
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REREPLICATION_FACTOR: 1
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093,PLAINTEXT_HOST://0.0.0.0:9092'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+
+  microservice-patients:
+    build: ./microservice-patients
+    container_name: hospital-patients
+    networks:
+      - hospital-network
+    ports:
+      - "50051:50051"
+    volumes:
+      - ./microservice-patients:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      - PORT=50051
+    depends_on:
+      - kafka
+
+  microservice-rendezvous:
+    build: ./microservice-rendezvous
+    container_name: hospital-rendezvous
+    networks:
+      - hospital-network
+    ports:
+      - "50052:50052"
+    volumes:
+      - ./microservice-rendezvous:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      - PORT=50052
+      - KAFKA_BROKER=kafka:29092
+    depends_on:
+      - kafka
+
+  microservice-dmp:
+    build: ./microservice-dmp
+    container_name: hospital-dmp
+    networks:
+      - hospital-network
+    ports:
+      - "50053:50053"
+    volumes:
+      - ./microservice-dmp:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      - PORT=50053
+      - KAFKA_BROKER=kafka:29092
+    depends_on:
+      - kafka
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: hospital-gateway
+    networks:
+      - hospital-network
+    ports:
+      - "3000:3000"
+      - "4000:4000"
+    volumes:
+      - ./api-gateway:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      - REST_PORT=3000
+      - GRAPHQL_PORT=4000
+      - PATIENTS_SERVICE_URL=microservice-patients:50051
+      - RENDEZVOUS_SERVICE_URL=microservice-rendezvous:50052
+      - DMP_SERVICE_URL=microservice-dmp:50053
+    depends_on:
+      - microservice-patients
+      - microservice-rendezvous
+      - microservice-dmp

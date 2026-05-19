@@ -56,7 +56,7 @@ const getDmpByPatient = async (call, callback) => {
 async function startKafkaConsumer() {
     try {
         await consumer.connect();
-        await consumer.subscribe({ topic: 'rendezvous-events', fromBeginning: true }); [cite: 231]
+        await consumer.subscribe({ topic: 'rendezvous-events', fromBeginning: true }); 
 
         await consumer.run({
             eachMessage: async ({ topic, partition, message }) => {
@@ -66,19 +66,19 @@ async function startKafkaConsumer() {
                 console.log(`➔ Message Kafka intercepté sur le topic [${topic}]:`, eventData);
 
                 // Si l'événement est bien la clôture du RDV
-                if (eventData.event === 'RendezVousTermine') { [cite: 231]
+                if (eventData.event === 'RendezVousTermine') { 
                     const newId = "dmp_" + Date.now().toString();
                     
                     // Insertion automatique dans la base NoSQL RxDB
                     await rxDb.dmps.insert({
                         id: newId,
                         patient_id: eventData.patient_id,
-                        diagnostic_principal: "Ébauche automatique (Consultation Clôturée)", [cite: 232]
+                        diagnostic_principal: "Ébauche automatique (Consultation Clôturée)", 
                         ordonnance: "À renseigner par le médecin",
                         date_creation: new Date().toISOString()
                     });
 
-                    console.log(`✓ RxDB: Ébauche de DMP créée avec succès pour le patient ${eventData.patient_id}`); [cite: 232]
+                    console.log(`✓ RxDB: Ébauche de DMP créée avec succès pour le patient ${eventData.patient_id}`); 
                 }
             },
         });
@@ -100,7 +100,7 @@ async function main() {
         GetDmpByPatient: getDmpByPatient
     });
 
-    const port = process.env.PORT || "50053"; [cite: 227]
+    const port = process.env.PORT || "50053"; 
     server.bindAsync(`0.0.0.0:${port}`, grpc.ServerCredentials.createInsecure(), (err, boundPort) => {
         if (err) return console.error(err);
         console.log(`✓ MS DMP gRPC Server connecté sur le port ${boundPort}`);

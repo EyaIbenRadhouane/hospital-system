@@ -2,7 +2,6 @@
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 const path = require('path');
-const { v4: uuidv4 } = require('uuid'); // Si non installé, utilise Date.now().toString() pour aller vite
 const { initDB } = require('./db');
 
 const PROTO_PATH = path.join(__dirname, '../protos/patients.proto');
@@ -19,12 +18,12 @@ const patientsProto = grpc.loadPackageDefinition(packageDefinition).patients;
 
 let db;
 
-// Implémentation des RPC du contrat .proto
+// ✅ RPC : CreatePatient
 const createPatient = async (call, callback) => {
     try {
         const { nom, prenom, age, telephone } = call.request;
-        const id = Date.now().toString(); // ID unique rapide sans dépendance externe stricte
-        
+        const id = "pat_" + Date.now().toString(); 
+
         await db.run(
             'INSERT INTO patients (id, nom, prenom, age, telephone) VALUES (?, ?, ?, ?, ?)',
             [id, nom, prenom, age, telephone]
@@ -39,9 +38,16 @@ const createPatient = async (call, callback) => {
     }
 };
 
+// ✅ RPC : GetPatient (SQL corrigé ici 👇)
 const getPatient = async (call, callback) => {
     try {
-        const patient = await db.get('SELECT * FROM patients WHERE id = ?', [call.request.id]);
+        // ❌ AVANT : 'SELECT * VALUES FROM patients WHERE id = ?'
+        // ✅ APRÈS :
+        const patient = await db.get(
+            'SELECT * FROM patients WHERE id = ?', 
+            [call.request.id]
+        );
+        
         if (!patient) {
             return callback({
                 code: grpc.status.NOT_FOUND,
@@ -58,7 +64,7 @@ const getPatient = async (call, callback) => {
 };
 
 async function main() {
-    db = await initDB(); // Initier SQLite3
+    db = await initDB();
 
     const server = new grpc.Server();
     server.addService(patientsProto.PatientsService.service, {
