@@ -1,0 +1,12 @@
+# Dépendances
+**/node_modules/
+npm-debug.log*
+
+# Bases de données locales (SQLite / RxDB de stockage)
+*.db
+*.sqlite
+*.sqlite3
+.rxdb/
+
+# Environnement
+.env
