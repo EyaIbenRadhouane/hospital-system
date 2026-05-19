@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package patients;
+
+service PatientsService {
+  rpc CreatePatient (CreatePatientRequest) returns (PatientResponse);
+  rpc GetPatient (GetPatientRequest) returns (PatientResponse);
+}
+
+message CreatePatientRequest {
+  string nom = 1;
+  string prenom = 2;
+  int32 age = 3;
+  string telephone = 4;
+}
+
+message GetPatientRequest {
+  string id = 1;
+}
+
+message PatientResponse {
+  string id = 1;
+  string nom = 2;
+  string prenom = 3;
+  int32 age = 4;
+  string telephone = 5;
+}

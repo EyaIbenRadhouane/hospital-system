@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package rendezvous;
+
+service RendezVousService {
+  rpc CreateRendezVous (CreateRDVRequest) returns (RDVResponse);
+  rpc UpdateRendezVousStatus (UpdateStatusRequest) returns (RDVResponse);
+}
+
+message CreateRDVRequest {
+  string patient_id = 1;
+  string medecin_id = 2;
+  string date_heure = 3;
+}
+
+message UpdateStatusRequest {
+  string id = 1;
+  string statut = 2; // "Confirme", "Termine"
+}
+
+message RDVResponse {
+  string id = 1;
+  string patient_id = 2;
+  string medecin_id = 3;
+  string date_heure = 4;
+  string statut = 5;
+}

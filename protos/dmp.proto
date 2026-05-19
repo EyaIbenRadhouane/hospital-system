@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package dmp;
+
+service DmpService {
+  rpc GetDmpByPatient (GetDmpRequest) returns (DmpResponse);
+}
+
+message GetDmpRequest {
+  string patient_id = 1;
+}
+
+message DmpResponse {
+  string id = 1;
+  string patient_id = 2;
+  string diagnostic_principal = 3;
+  string ordonnance = 4;
+  string date_creation = 5;
+}
